@@ -23,7 +23,9 @@ struct Quakes: View {
         NavigationView {
             List(selection: $selection) {
                 ForEach(provider.quakes) { quake in
-                    QuakeRow(quake: quake)
+                    NavigationLink(destination: QuakeDetail(quake: quake)) {
+                        QuakeRow(quake: quake)
+                    }
                 }
                 .onDelete(perform: deleteQuakes)
             }
@@ -32,12 +34,16 @@ struct Quakes: View {
             .toolbar(content: toolbarContent)
             .environment(\.editMode, $editMode)
             .refreshable {
-                await fetchQuakes()
+                do {
+                    try await provider.fetchQuakes()
+                } catch {
+                    self.error = QuakeError.missingData
+                    hasError = true
+                }
             }
-            .alert(isPresented: $hasError, error: error) {}
         }
         .task {
-            await fetchQuakes()
+            try? await provider.fetchQuakes()
         }
     }
 }
